@@ -2,46 +2,54 @@ pipeline {
     agent any
 
     environment {
-        AWS_REGION = "ap-south-1"
-        ECR_REPO = "207963326787.dkr.ecr.ap-south-1.amazonaws.com/ecommerce-app"
-        IMAGE_NAME = "ecommerce-app"
+        AWS_REGION = 'ap-south-1'
+        AWS_ACCOUNT_ID = '207963326787'   // Apna AWS account ID
+        IMAGE_LOCAL = "ecommerce-app:build-${BUILD_NUMBER}"
+        IMAGE_REPO_NAME = "my-ecommerce-app" 
+        IMAGE_TAG = "build-${BUILD_NUMBER}"
+        IMAGE_URI = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_REPO_NAME}:${IMAGE_TAG}"
     }
 
     stages {
         stage('Checkout Code') {
             steps {
-                git branch: 'main', url: 'https://github.com/mrbhupendra1/ecomerce-repo.git'
-            }
-        }
-
-        stage('Login to AWS ECR') {
-            steps {
-                withAWS(credentials: 'aws-creds', region: "${AWS_REGION}") {
-                    sh '''
-                        echo "Logging in to AWS ECR..."
-                        aws ecr get-login-password --region ${AWS_REGION} \
-                        | docker login --username AWS --password-stdin ${ECR_REPO}
-                    '''
-                }
+                git branch: 'main',
+                    url: 'https://github.com/mrbhupendra1/ecomerce-repo.git'
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 sh '''
-                    echo "Building Docker image..."
-                    docker build -t ${IMAGE_NAME}:latest .
-                    docker tag ${IMAGE_NAME}:latest ${ECR_REPO}:latest
+                echo "Building Docker image..."
+                docker build -t $IMAGE_LOCAL .
+                '''
+            }
+        }
+
+        stage('Verify Docker Image') {
+            steps {
+                sh '''
+                echo "Verifying Docker image..."
+                docker images | grep ecommerce-app
                 '''
             }
         }
 
         stage('Push to ECR') {
             steps {
-                sh '''
-                    echo "Pushing image to ECR..."
-                    docker push ${ECR_REPO}:latest
-                '''
+                withAWS(region: "${AWS_REGION}", credentials: 'aws-creds') {
+                    sh '''
+                    echo "Logging in to Amazon ECR..."
+                    aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+
+                    echo "Tagging Docker image..."
+                    docker tag $IMAGE_LOCAL $IMAGE_URI
+
+                    echo "Pushing Docker image to ECR..."
+                    docker push $IMAGE_URI
+                    '''
+                }
             }
         }
     }
