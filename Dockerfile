@@ -1,13 +1,29 @@
-FROM node:18-alpine
-WORKDIR /app
+pipeline {
+    agent any
 
-# install dependencies
-COPY package*.json ./
-RUN npm install --production
+    environment {
+        IMAGE_NAME = "my-app"
+        IMAGE_TAG  = "latest"
+    }
 
-# copy app
-COPY . .
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main',
+                    url: 'https://github.com/mrbhupendra1/ecomerce-repo.git'
+            }
+        }
 
-EXPOSE 3000
-CMD ["node", "server.js"]
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t $IMAGE_NAME:$IMAGE_TAG .'
+            }
+        }
 
+        stage('Verify Image') {
+            steps {
+                sh 'docker images | grep $IMAGE_NAME'
+            }
+        }
+    }
+}
