@@ -2,30 +2,47 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "ecommerce-app"
-        IMAGE_TAG  = "build-${BUILD_NUMBER}"
+        AWS_DEFAULT_REGION = 'ap-south-1'
+        ECR_REPO = '207963326787.dkr.ecr.ap-south-1.amazonaws.com/my-app'
     }
 
     stages {
         stage('Checkout Code') {
             steps {
                 git branch: 'main',
-                    url: 'https://github.com/mrbhupendra1/ecomerce-repo.git'
+                    url: 'https://github.com/mrbhupendra1/ecomerce-repo.git',
+                    credentialsId: 'git-credentials'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh '''
                 echo "Building Docker image..."
-                docker build -t $IMAGE_NAME:$IMAGE_TAG .
-                '''
+                sh 'docker build -t ecommerce-app:latest .'
             }
         }
 
         stage('Verify Docker Image') {
             steps {
-                sh "docker images | grep $IMAGE_NAME"
+                echo "Verifying Docker image..."
+                sh 'docker images | grep ecommerce-app'
+            }
+        }
+
+        stage('Push to ECR') {
+            steps {
+                withAWS(credentials: 'aws-credentials', region: "${AWS_DEFAULT_REGION}") {
+                    sh '''
+                        echo "Logging in to AWS ECR..."
+                        aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR_REPO
+
+                        echo "Tagging image for ECR..."
+                        docker tag ecommerce-app:latest $ECR_REPO:latest
+
+                        echo "Pushing image to ECR..."
+                        docker push $ECR_REPO:latest
+                    '''
+                }
             }
         }
     }
