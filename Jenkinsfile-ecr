@@ -2,39 +2,36 @@ pipeline {
     agent any
 
     environment {
+        AWS_DEFAULT_REGION = "ap-south-1"
         AWS_ACCOUNT_ID = "207963326787"
-        AWS_REGION = "ap-south-1"
-        ECR_REPO = "my-app"
-        IMAGE_TAG = "latest"
-        IMAGE_URI = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${IMAGE_TAG}"
+        ECR_REPO_NAME = "my-ecommerce-app"
+        IMAGE_TAG = "build-${BUILD_NUMBER}"
     }
 
     stages {
-        stage('Checkout') {
+        stage('Checkout Code') {
             steps {
-                git branch: 'main',
-                    url: 'https://github.com/mrbhupendra1/ecomerce-repo.git'
+                git branch: 'main', url: 'https://github.com/mrbhupendra1/ecomerce-repo.git'
             }
         }
 
-        stage('Login to ECR') {
+        stage('Login to AWS ECR') {
+            steps {
+                withAWS(credentials: 'aws-creds', region: "${AWS_DEFAULT_REGION}") {
+                    sh '''
+                        aws ecr get-login-password --region ${AWS_DEFAULT_REGION} \
+                        | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com
+                    '''
+                }
+            }
+        }
+
+        stage('Tag and Push Image') {
             steps {
                 sh '''
-                  aws ecr get-login-password --region $AWS_REGION | \
-                  docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+                    docker tag ecommerce-app:${IMAGE_TAG} ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${ECR_REPO_NAME}:${IMAGE_TAG}
+                    docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${ECR_REPO_NAME}:${IMAGE_TAG}
                 '''
-            }
-        }
-
-        stage('Tag Image') {
-            steps {
-                sh 'docker tag my-app:latest $IMAGE_URI'
-            }
-        }
-
-        stage('Push Image') {
-            steps {
-                sh 'docker push $IMAGE_URI'
             }
         }
     }
