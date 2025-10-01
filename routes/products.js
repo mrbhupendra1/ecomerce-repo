@@ -1,17 +1,31 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const products = require('../data/products.json');
+const products = require("../data/products.json");
 
-router.get('/', (req, res) => {
+// GET all products
+router.get("/", (req, res) => {
   res.json(products);
 });
 
-router.get('/:id', (req, res) => {
-  const id = parseInt(req.params.id, 10);
-  const product = products.find(p => p.id === id);
-  if (!product) return res.status(404).json({ error: 'Product not found' });
+// GET product by ID
+router.get("/:id", (req, res) => {
+  const product = products.find(p => p.id === parseInt(req.params.id));
+  if (!product) {
+    return res.status(404).json({ message: "❌ Product not found" });
+  }
   res.json(product);
 });
 
-module.exports = router;
+// POST new product
+router.post("/", (req, res) => {
+  const { name, price } = req.body;
+  const newProduct = {
+    id: products.length + 1,
+    name,
+    price
+  };
+  products.push(newProduct);
+  res.status(201).json(newProduct);
+});
 
+module.exports = router;
