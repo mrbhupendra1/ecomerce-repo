@@ -1,13 +1,25 @@
-const express = require('express');
-const productsRouter = require('./routes/products');
+const express = require("express");
+const bodyParser = require("body-parser");
+const cors = require("cors");
+const morgan = require("morgan");
+
+const productRoutes = require("./routes/products");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(express.json());
-app.use('/products', productsRouter);
+// Middlewares
+app.use(cors());
+app.use(bodyParser.json());
+app.use(morgan("dev"));
 
-app.get('/', (req, res) => res.send('Welcome to My E-commerce App'));
+// Routes
+app.get("/", (req, res) => {
+  res.send("🚀 Welcome to Bhupendra's E-Commerce App!");
+});
 
-app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
+app.use("/api/products", productRoutes);
 
+app.listen(PORT, () => {
+  console.log(`✅ Server running on http://localhost:${PORT}`);
+});
