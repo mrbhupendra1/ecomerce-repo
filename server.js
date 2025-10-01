@@ -16,7 +16,7 @@ app.use(morgan("dev"));
 // Serve frontend
 app.use(express.static("public"));
 
-// Routes
+// API routes
 app.use("/api/products", productRoutes);
 
 app.listen(PORT, () => {
