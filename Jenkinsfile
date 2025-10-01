@@ -54,17 +54,23 @@ pipeline {
 
         stage('Deploy to Server-02') {
             steps {
-                sshagent (credentials: ['server02-ssh']) {
-                    sh '''
-                        echo "Deploying to Server-02..."
-                        ssh -o StrictHostKeyChecking=no ubuntu@10.0.2.94 "
-                            aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com &&
-                            docker pull $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:${IMAGE_TAG} &&
-                            docker stop ${IMAGE_NAME} || true &&
-                            docker rm ${IMAGE_NAME} || true &&
-                            docker run -d --name ${IMAGE_NAME} -p 3000:3000 $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:${IMAGE_TAG}
-                        "
-                    '''
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', 
+                                  credentialsId: 'aws-creds']]) {
+                    sshagent (credentials: ['server02-ssh']) {
+                        sh '''
+                            echo "Deploying to Server-02..."
+                            ssh -o StrictHostKeyChecking=no ubuntu@13.233.154.171 "
+                                export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID &&
+                                export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY &&
+                                export AWS_DEFAULT_REGION=$AWS_REGION &&
+                                aws ecr get-login-password --region $AWS_REGION | sudo docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com &&
+                                sudo docker pull $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:${IMAGE_TAG} &&
+                                sudo docker stop ${IMAGE_NAME} || true &&
+                                sudo docker rm ${IMAGE_NAME} || true &&
+                                sudo docker run -d --name ${IMAGE_NAME} -p 3000:3000 $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:${IMAGE_TAG}
+                            "
+                        '''
+                    }
                 }
             }
         }
