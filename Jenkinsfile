@@ -54,7 +54,7 @@ pipeline {
 
         stage('Deploy to Server-02') {
             steps {
-                sshagent (credentials: ['server-02-ssh']) {
+                sshagent (credentials: ['server02-ssh']) {
                     sh '''
                         echo "Deploying to Server-02..."
                         ssh -o StrictHostKeyChecking=no ubuntu@10.0.2.94 "
