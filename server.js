@@ -13,11 +13,10 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(morgan("dev"));
 
-// Routes
-app.get("/", (req, res) => {
-  res.send("🚀 Welcome to Bhupendra's E-Commerce App!");
-});
+// Serve frontend
+app.use(express.static("public"));
 
+// Routes
 app.use("/api/products", productRoutes);
 
 app.listen(PORT, () => {
