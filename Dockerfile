@@ -1,29 +1,11 @@
-pipeline {
-    agent any
+# Use official Nginx image
+FROM nginx:latest
 
-    environment {
-        IMAGE_NAME = "my-app"
-        IMAGE_TAG  = "latest"
-    }
+# Copy application code into nginx html folder
+COPY ./app /usr/share/nginx/html
 
-    stages {
-        stage('Checkout') {
-            steps {
-                git branch: 'main',
-                    url: 'https://github.com/mrbhupendra1/ecomerce-repo.git'
-            }
-        }
+# Expose port
+EXPOSE 80
 
-        stage('Build Docker Image') {
-            steps {
-                sh 'docker build -t $IMAGE_NAME:$IMAGE_TAG .'
-            }
-        }
-
-        stage('Verify Image') {
-            steps {
-                sh 'docker images | grep $IMAGE_NAME'
-            }
-        }
-    }
-}
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"]
