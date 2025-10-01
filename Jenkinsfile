@@ -1,30 +1,32 @@
 pipeline {
-  agent any
-  parameters {
-    string(name: 'REGISTRY', defaultValue: '', description: 'Docker registry (leave empty to skip push)')
-    string(name: 'IMAGE_NAME', defaultValue: 'my-ecommerce-app', description: 'Image name')
-  }
-  stages {
-    stage('Checkout') {
-      steps { checkout scm }
-    }
-    stage('Build image') {
-      steps {
-        sh 'docker build -t ${IMAGE_NAME}:${BUILD_NUMBER} .'
-      }
-    }
-    stage('Push') {
-      when { expression { return params.REGISTRY != '' } }
-      steps {
-        withCredentials([usernamePassword(credentialsId: 'docker-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-          sh '''
-            echo "$DOCKER_PASS" | docker login ${REGISTRY} -u "$DOCKER_USER" --password-stdin
-            docker tag ${IMAGE_NAME}:${BUILD_NUMBER} ${REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER}
-            docker push ${REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER}
-          '''
-        }
-      }
-    }
-  }
-}
+    agent any
 
+    environment {
+        IMAGE_NAME = "ecommerce-app"
+        IMAGE_TAG  = "build-${BUILD_NUMBER}"
+    }
+
+    stages {
+        stage('Checkout Code') {
+            steps {
+                git branch: 'main',
+                    url: 'https://github.com/mrbhupendra1/ecomerce-repo.git'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh '''
+                echo "Building Docker image..."
+                docker build -t $IMAGE_NAME:$IMAGE_TAG .
+                '''
+            }
+        }
+
+        stage('Verify Docker Image') {
+            steps {
+                sh "docker images | grep $IMAGE_NAME"
+            }
+        }
+    }
+}
