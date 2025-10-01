@@ -2,10 +2,9 @@ pipeline {
     agent any
 
     environment {
-        AWS_DEFAULT_REGION = "ap-south-1"
-        AWS_ACCOUNT_ID = "207963326787"
-        ECR_REPO_NAME = "my-ecommerce-app"
-        IMAGE_TAG = "build-${BUILD_NUMBER}"
+        AWS_REGION = "ap-south-1"
+        ECR_REPO = "207963326787.dkr.ecr.ap-south-1.amazonaws.com/ecommerce-app"
+        IMAGE_NAME = "ecommerce-app"
     }
 
     stages {
@@ -17,20 +16,31 @@ pipeline {
 
         stage('Login to AWS ECR') {
             steps {
-                withAWS(credentials: 'aws-creds', region: "${AWS_DEFAULT_REGION}") {
+                withAWS(credentials: 'aws-creds', region: "${AWS_REGION}") {
                     sh '''
-                        aws ecr get-login-password --region ${AWS_DEFAULT_REGION} \
-                        | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com
+                        echo "Logging in to AWS ECR..."
+                        aws ecr get-login-password --region ${AWS_REGION} \
+                        | docker login --username AWS --password-stdin ${ECR_REPO}
                     '''
                 }
             }
         }
 
-        stage('Tag and Push Image') {
+        stage('Build Docker Image') {
             steps {
                 sh '''
-                    docker tag ecommerce-app:${IMAGE_TAG} ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${ECR_REPO_NAME}:${IMAGE_TAG}
-                    docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${ECR_REPO_NAME}:${IMAGE_TAG}
+                    echo "Building Docker image..."
+                    docker build -t ${IMAGE_NAME}:latest .
+                    docker tag ${IMAGE_NAME}:latest ${ECR_REPO}:latest
+                '''
+            }
+        }
+
+        stage('Push to ECR') {
+            steps {
+                sh '''
+                    echo "Pushing image to ECR..."
+                    docker push ${ECR_REPO}:latest
                 '''
             }
         }
