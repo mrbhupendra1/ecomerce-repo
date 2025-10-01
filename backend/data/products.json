@@ -1,0 +1,8 @@
+[
+  { "id": 1, "name": "Laptop", "price": 65000, "img": "https://via.placeholder.com/200?text=Laptop" },
+  { "id": 2, "name": "Smartphone", "price": 25000, "img": "https://via.placeholder.com/200?text=Phone" },
+  { "id": 3, "name": "Headphones", "price": 2000, "img": "https://via.placeholder.com/200?text=Headphones" },
+  { "id": 4, "name": "Smartwatch", "price": 8000, "img": "https://via.placeholder.com/200?text=Watch" },
+  { "id": 5, "name": "Bluetooth Speaker", "price": 3000, "img": "https://via.placeholder.com/200?text=Speaker" }
+]
+
