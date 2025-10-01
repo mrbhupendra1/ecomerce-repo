@@ -1,0 +1,6 @@
+[
+  { "id": 1, "name": "Basic T-Shirt", "price": 299, "stock": 50 },
+  { "id": 2, "name": "Running Sneakers", "price": 1999, "stock": 20 },
+  { "id": 3, "name": "Coffee Mug", "price": 199, "stock": 100 }
+]
+
