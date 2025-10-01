@@ -3,9 +3,9 @@ pipeline {
 
     environment {
         AWS_REGION = 'ap-south-1'
-        AWS_ACCOUNT_ID = '207963326787'   // Apna AWS account ID
+        AWS_ACCOUNT_ID = '207963326787'
         IMAGE_LOCAL = "ecommerce-app:build-${BUILD_NUMBER}"
-        IMAGE_REPO_NAME = "my-ecommerce-app" 
+        IMAGE_REPO_NAME = "my-ecommerce-app"
         IMAGE_TAG = "build-${BUILD_NUMBER}"
         IMAGE_URI = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_REPO_NAME}:${IMAGE_TAG}"
     }
